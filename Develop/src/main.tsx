@@ -1,3 +1,4 @@
+
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import './index.css';
@@ -15,7 +16,7 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <CandidateSearch />,
+        element: <CandidateSearch login={''} email={''} />,
       },
       {
         path: '/SavedCandidates',

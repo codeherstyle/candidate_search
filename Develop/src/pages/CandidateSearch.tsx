@@ -1,112 +1,92 @@
-import { useState, useEffect } from "react";
-import { searchGithub, searchGithubUser } from "../api/API";
+import { useState, useEffect } from 'react';
+import { searchGithub , searchGithubUser} from '../api/API';
+import Candidate from '../interfaces/Candidate.interface';
 
-interface Candidate {
-  login: string;
-  name: string | null;
-  avatar_url: string;
-  email: string | null;
-  company: string | null;
-  location: string | null;
-  html_url: string;
-}
 
-const CandidateSearch = () => {
-  const [candidate, setCandidate] = useState<Candidate | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+const CandidateSearch: React.FC<Candidate> = () => {
+  // State to hold the fetched candidate data
+  const [candidateData, setCandidateData] = useState<Candidate | null>(null);
+
+  // Fetch the user data when the component comes up
+  const fetchCandidateData = async () => {
+    try {
+      const response = await searchGithub();
+      console.log("API Response:", response);
+
+      const data: Candidate[] = Array.isArray(response) ? response : [response];
+      const randomCandidate = data[Math.floor(Math.random() * data.length)];
+      const candidateDetails = await searchGithubUser(randomCandidate.login);
+      console.log("Candidate Details:", candidateDetails); // Debugging
+
+      if (!candidateDetails) {
+        console.warn("No detailed data available.");
+        return;
+      }
+
+      setCandidateData(candidateDetails);
+    } catch (error) {
+      console.error("Error fetching GitHub data:", error);
+    }
+  };
 
   useEffect(() => {
-    loadCandidate();
+    fetchCandidateData();
   }, []);
 
-  const loadCandidate = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      console.log("Fetching candidate list...");
-      const users = await searchGithub();
-
-      if (Array.isArray(users) && users.length > 0) {
-        const username = users[0].login;
-        console.log("Fetching details for:", username);
-        const userDetails = await searchGithubUser(username);
-
-        if (userDetails && userDetails.login) {
-          setCandidate(userDetails);
-        } else {
-          throw new Error("⚠️ Invalid candidate data received");
-        }
-      } else {
-        setCandidate(null);
-      }
-    } catch (err) {
-      setError("Failed to load candidate. Please try again.");
-      console.error("Error fetching candidate:", err);
-    } finally {
-      setLoading(false);
-    }
+  // Handle reject button click
+  const handleReject = () => {
+    console.log(`${candidateData?.login ?? "Unknown"} was rejected.`);
+    // Fetch a new candidate after rejection
+    fetchCandidateData();
   };
 
-  const saveCandidate = () => {
-    if (candidate) {
-      try {
-        const savedCandidates: Candidate[] = JSON.parse(localStorage.getItem("savedCandidates") || "[]");
-
-        // Ensure candidate is not already saved
-        if (!savedCandidates.some((c) => c.login === candidate.login)) {
-          localStorage.setItem("savedCandidates", JSON.stringify([...savedCandidates, candidate]));
-          console.log("Candidate saved:", candidate);
-        } else {
-          console.warn("Candidate already saved:", candidate.login);
-        }
-
-        loadCandidate(); // Load next candidate after saving
-      } catch (err) {
-        console.error("⚠️ Error saving candidate:", err);
-      }
+  // Handle save button click
+  const handleSave = () => {
+    const storedCandidates = localStorage.getItem('candidates');
+    let parsedCandidates: Candidate[] = storedCandidates ? JSON.parse(storedCandidates) : [];
+    
+    if (typeof storedCandidates === 'string') {
+      parsedCandidates = JSON.parse(storedCandidates);
     }
+    if (candidateData) {
+      parsedCandidates.push(candidateData);
+    }
+    localStorage.setItem('candidates', JSON.stringify(parsedCandidates));
+    fetchCandidateData();
   };
-
-  return (
-    <main>
-      <h1>Candidate Search</h1>
-
-      {loading ? (
-        <p>Loading...</p>
-      ) : error ? (
-        <p style={{ color: "red", fontWeight: "bold" }}>{error}</p>
-      ) : candidate ? (
-        <div className="card">
-          <img src={candidate.avatar_url} alt={candidate.name || "Candidate"} width="100%" style={{ borderRadius: "10px" }} />
-          <h2>{candidate.name || "No Name Provided"} <em>({candidate.login})</em></h2>
-          <p><strong>Location:</strong> {candidate.location || "Not available"}</p>
-          <p><strong>Company:</strong> {candidate.company || "Not available"}</p>
-          <p><strong>Email:</strong> 
-            {candidate.email ? (
-              <a href={`mailto:${candidate.email}`} style={{ color: "#00aaff" }}>
-                {candidate.email}
-              </a>
-            ) : "Not available"}
-          </p>
-          <p>
-            <strong>Profile:</strong> 
-            <a href={candidate.html_url} target="_blank" rel="noopener noreferrer" style={{ color: "#00aaff" }}>
-              GitHub Profile
-            </a>
-          </p>
-          
-          <div className="button-container">
-            <button className="reject" onClick={loadCandidate}>−</button>
-            <button className="accept" onClick={saveCandidate}>+</button>
-          </div>
+// This is the card that should show up in the UI
+return (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 40px)', padding: '20px 0' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      {/* Candidate Card */}
+      <div className="card" style={{ borderRadius: '15px', overflow: 'hidden', backgroundColor: '#333', color: '#fff', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '300px', margin: '20px 0' }}>
+        <img src={candidateData?.avatar_url ?? "default-avatar.png"} alt="Avatar" style={{ borderRadius: '50%', marginBottom: '20px', width: '100px', height: '100px' }}/>
+        <div style={{ flex: 1, textAlign: 'left', width: '100%' }}>
+          <h2>Name: {candidateData?.name ?? "No Name Given"}</h2>
+          <h2>Login: {candidateData?.login ?? "Unknown User"}</h2>
+          <p>Location: {candidateData?.location ?? "No Location"}</p>
+          <p>Email: {candidateData?.email ?? "No Email"}</p>
+          <p>Company: {candidateData?.company ?? "No Company"}</p>
+          <p>HTML URL: {candidateData?.html_url ?? "No HTML URL"}</p>
+          <p>BIO: {candidateData?.bio ?? "No Bio"}</p>
         </div>
-      ) : (
-        <p>No candidates available.</p>
-      )}
-    </main>
-  );
-};
+      </div>
+
+      {/* Buttons */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '80px', marginTop: '20px' }}>
+        {/* Reject Button */}
+        <button onClick={handleReject} className="reject-btn" style={{ borderRadius: '50%', backgroundColor: 'red', border: 'none', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ color: 'black', fontSize: '24px' }}>−</span>
+        </button>
+
+        {/* Save Button */}
+        <button onClick={handleSave} className="save-btn" style={{ borderRadius: '50%', backgroundColor: 'green', border: 'none', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ color: 'black', fontSize: '24px' }}>+</span>
+        </button>
+      </div>
+    </div>
+  </div>
+);
+}
 
 export default CandidateSearch;

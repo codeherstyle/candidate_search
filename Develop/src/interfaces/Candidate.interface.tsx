@@ -1,42 +1,27 @@
-// TODO: Create an interface for the Candidate objects returned by the API
-import { Link } from "react-router-dom";
+interface Candidate {
+  avatar_url?: string;
+  name?: string;
+  login: string;
+  location?: string;
+  email?: string;
+  company?: string;
+  html_url?: string;
+  bio?: string;
+}
 
-const Nav = () => {
+function Candidate(props: Candidate) {
   return (
-    <nav style={navStyle}>
-      <h1>GitHub Candidate Search</h1>
-      <ul style={navListStyle}>
-        <li>
-          <Link to="/" style={linkStyle}>Search Candidates</Link>
-        </li>
-        <li>
-          <Link to="/saved" style={linkStyle}>Saved Candidates</Link>
-        </li>
-      </ul>
-    </nav>
-  );
-};
+      <div className="candidate">
+          <img src={props.avatar_url} alt={props.login} />
+          <h2>{props.name}</h2>
+          <h2>{props.login}</h2>
+          <p>{props.location}</p>
+          <p>{props.email}</p>
+          <p>{props.html_url}</p>
+          <p>{props.company}</p>
+          <p>{props.bio}</p>
+      </div>
+  )
+}
 
-// Basic inline styles (optional, replace with CSS if needed)
-const navStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  padding: "10px 20px",
-  backgroundColor: "#282c34",
-  color: "white",
-};
-
-const navListStyle = {
-  listStyle: "none",
-  display: "flex",
-  gap: "20px",
-};
-
-const linkStyle = {
-  color: "white",
-  textDecoration: "none",
-  fontSize: "18px",
-};
-
-export default Nav;
+export default Candidate;

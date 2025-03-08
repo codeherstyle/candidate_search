@@ -1,29 +1,17 @@
-import { Routes, Route } from "react-router-dom";
-import Nav from "./components/Nav";
-import CandidateSearch from "./pages/CandidateSearch";
-import SavedCandidates from "./pages/SavedCandidates";
-import NotFound from "./pages/ErrorPage"; // Ensure this file exists
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+import Nav from './components/Nav';
+import './index.css';
 
-function App() {
+const App: React.FC = () => {
   return (
     <>
       <Nav />
-      <main style={mainStyle}>
-        <Routes>
-          <Route path="/" element={<CandidateSearch />} />
-          <Route path="/saved" element={<SavedCandidates />} />
-          {/* Catch-all wildcard route for invalid paths */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+      <main>
+        <Outlet />
       </main>
     </>
   );
 }
-
-const mainStyle = {
-  padding: "20px",
-  maxWidth: "800px",
-  margin: "0 auto",
-};
 
 export default App;
